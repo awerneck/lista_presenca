@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Administração</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 80px; }
+        input { padding: 10px; width: 250px; margin: 8px; }
+        button { padding: 10px 20px; }
+        p.erro { color: red; }
+    </style>
+</head>
+<body>
+    <h2>Acesso Administrativo</h2>
+    {% if erro %}
+        <p class="erro">{{ erro }}</p>
+    {% endif %}
+    <form method="POST">
+        <input type="text" name="usuario" placeholder="Usuário" required><br>
+        <input type="password" name="senha" placeholder="Senha" required><br>
+        <button type="submit">Entrar</button>
+    </form>
+</body>
+</html>

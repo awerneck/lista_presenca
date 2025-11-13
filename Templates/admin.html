@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel Administrativo</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin: 40px; }
+        table { margin: auto; border-collapse: collapse; width: 85%; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #eee; }
+        form { margin-bottom: 20px; }
+        input { padding: 6px; margin: 4px; }
+        button { padding: 8px 20px; cursor: pointer; background: #2d89ef; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #1e5cb3; }
+        a.logout { display: inline-block; margin-top: 20px; padding: 8px 20px; background: #999; color: #fff; text-decoration: none; border-radius: 4px; }
+        a.logout:hover { background: #666; }
+    </style>
+</head>
+<body>
+    <h2>Painel de Presenças</h2>
+
+    <form method="GET">
+        <input type="text" name="termo" placeholder="Buscar por nome, matrícula ou setor" value="{{ termo }}">
+        <input type="date" name="data" value="{{ data }}">
+        <button type="submit">Filtrar</button>
+    </form>
+
+    {% if presencas|length > 1 %}
+        <table>
+            {% for linha in presencas %}
+                <tr>
+                    {% for celula in linha %}
+                        <td>{{ celula }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Nenhuma presença encontrada.</p>
+    {% endif %}
+
+    <a class="logout" href="{{ url_for('logout') }}">Sair</a>
+</body>
+</html>
