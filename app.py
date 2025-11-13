@@ -24,7 +24,7 @@ def conectar_sheets():
 # ---------- Funções principais ----------
 
 def gerar_qrcode():
-    url = "https://lista-presenca-kdwr.onrender.com//presenca"
+    url = "https://lista-presenca-kdwr.onrender.com"
     img = qrcode.make(url)
     os.makedirs("static", exist_ok=True)
     img.save("static/qrcode.png")
@@ -106,5 +106,6 @@ def logout():
 if __name__ == '__main__':
     from waitress import serve
     serve(app, host="0.0.0.0", port=8080)
+
 
 
