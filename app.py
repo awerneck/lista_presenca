@@ -1,111 +1,118 @@
+import os
+import json
+import qrcode
+import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, session
-import qrcode, os
-from datetime import datetime
-import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import gspread
+from datetime import datetime
+from io import StringIO
+from waitress import serve
 
+# ============================================================
+# CONFIGURAÇÃO BÁSICA DO FLASK
+# ============================================================
 app = Flask(__name__)
-app.secret_key = 'chave-super-secreta'
+app.secret_key = "chave_secreta_segura"
 
-# Configuração de admin
-ADMIN_USER = 'admin'
-ADMIN_PASS = '1234'
+# ============================================================
+# CONFIGURAÇÃO DO GOOGLE SHEETS
+# ============================================================
+escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Configuração do Google Sheets
-PLANILHA_NOME = "Controle de Presença"
+# Carrega as credenciais diretamente da variável de ambiente do Render
+credenciais_dict = json.loads(os.environ["GOOGLE_CREDS_JSON"])
+credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
+cliente = gspread.authorize(credenciais)
 
-def conectar_sheets():
-    escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credenciais = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", escopo)
-    cliente = gspread.authorize(credenciais)
-    return cliente.open(PLANILHA_NOME).sheet1
+# Abra a planilha (garanta que ela tenha as colunas: Nome Completo | Matrícula | Setor | Data/Hora)
+planilha = cliente.open("Lista de Presença").sheet1
 
-
-# ---------- Funções principais ----------
-
+# ============================================================
+# GERAÇÃO DO QR CODE COM LINK PÚBLICO DO RENDER
+# ============================================================
 def gerar_qrcode():
-    url = "https://lista-presenca-kdwr.onrender.com"
+    # Substitua pelo seu domínio do Render após o primeiro deploy
+    url = "https://lista-presenca-kdwr.onrender.com/presenca"
     img = qrcode.make(url)
     os.makedirs("static", exist_ok=True)
     img.save("static/qrcode.png")
 
-def registrar_presenca(nome, matricula, setor):
-    planilha = conectar_sheets()
-    data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    planilha.append_row([nome, matricula, setor, data])
+# Gera QRCode na inicialização
+gerar_qrcode()
 
-def carregar_presencas():
-    planilha = conectar_sheets()
-    return planilha.get_all_values()
+# ============================================================
+# ROTAS DO SISTEMA
+# ============================================================
 
-
-# ---------- Rotas ----------
-
-@app.route('/')
+# Página inicial — mostra o QR Code
+@app.route("/")
 def index():
-    gerar_qrcode()
-    return render_template('index.html')
+    return render_template("index.html", imagem_qrcode="static/qrcode.png")
 
-@app.route('/presenca', methods=['GET', 'POST'])
+# Página de presença — formulário preenchido pelo participante
+@app.route("/presenca", methods=["GET", "POST"])
 def presenca():
-    if request.method == 'POST':
-        nome = request.form.get('nome', '').strip()
-        matricula = request.form.get('matricula', '').strip()
-        setor = request.form.get('setor', '').strip()
+    if request.method == "POST":
+        nome = request.form["nome"]
+        matricula = request.form["matricula"]
+        setor = request.form["setor"]
+        datahora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-        if not nome or not matricula or not setor:
-            return render_template('presenca.html', erro="Preencha todos os campos.", confirmacao=False)
+        planilha.append_row([nome, matricula, setor, datahora])
+        return render_template("presenca.html", sucesso=True)
+    return render_template("presenca.html", sucesso=False)
 
-        registrar_presenca(nome, matricula, setor)
-        return render_template('presenca.html', confirmacao=True, nome=nome)
-
-    return render_template('presenca.html', confirmacao=False)
-
-
-@app.route('/login', methods=['GET', 'POST'])
+# Página de login do administrador
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        usuario = request.form.get('usuario')
-        senha = request.form.get('senha')
-
-        if usuario == ADMIN_USER and senha == ADMIN_PASS:
-            session['admin'] = True
-            return redirect(url_for('admin'))
+    if request.method == "POST":
+        usuario = request.form["usuario"]
+        senha = request.form["senha"]
+        if usuario == "admin" and senha == "1234":
+            session["usuario"] = usuario
+            return redirect(url_for("admin"))
         else:
-            return render_template('login.html', erro="Usuário ou senha inválidos.")
-    return render_template('login.html')
+            return render_template("login.html", erro=True)
+    return render_template("login.html", erro=False)
 
-
-@app.route('/admin', methods=['GET'])
+# Painel administrativo
+@app.route("/admin")
 def admin():
-    if not session.get('admin'):
-        return redirect(url_for('login'))
+    if "usuario" not in session:
+        return redirect(url_for("login"))
 
-    termo = request.args.get('termo', '').strip().lower()
-    data_filtro = request.args.get('data', '').strip()
-    presencas = carregar_presencas()
+    registros = planilha.get_all_records()
+    df = pd.DataFrame(registros)
+    return render_template("admin.html", tabelas=[df.to_html(classes="table table-striped", index=False)], busca=False)
 
-    cabecalho = presencas[0] if presencas else []
-    registros = presencas[1:] if len(presencas) > 1 else []
+# Filtro de busca
+@app.route("/buscar", methods=["POST"])
+def buscar():
+    if "usuario" not in session:
+        return redirect(url_for("login"))
 
-    if termo or data_filtro:
-        registros = [
-            r for r in registros
-            if (termo in ' '.join(r).lower()) and (data_filtro in r[3] if data_filtro else True)
-        ]
+    nome_busca = request.form["nome"].lower().strip()
+    data_busca = request.form["data"].strip()
+    registros = planilha.get_all_records()
+    df = pd.DataFrame(registros)
 
-    return render_template('admin.html', presencas=[cabecalho] + registros, termo=termo, data=data_filtro)
+    if nome_busca:
+        df = df[df["Nome Completo"].str.lower().str.contains(nome_busca)]
+    if data_busca:
+        df = df[df["Data/Hora"].str.startswith(data_busca)]
 
+    return render_template("admin.html", tabelas=[df.to_html(classes="table table-striped", index=False)], busca=True)
 
-@app.route('/logout')
+# Logout
+@app.route("/logout")
 def logout():
-    session.pop('admin', None)
-    return redirect(url_for('login'))
+    session.pop("usuario", None)
+    return redirect(url_for("index"))
 
-
-if __name__ == '__main__':
-    from waitress import serve
+# ============================================================
+# EXECUÇÃO (LOCAL OU NO RENDER)
+# ============================================================
+if __name__ == "__main__":
+     from waitress import serve
     serve(app, host="0.0.0.0", port=8080)
-
-
-
