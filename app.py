@@ -9,7 +9,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 from io import StringIO
 from waitress import serve
-credenciais = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", scope)
 
 
 # ============================================================
@@ -117,9 +116,8 @@ def logout():
 # EXECUÇÃO (LOCAL OU NO RENDER)
 # ============================================================
 if __name__ == "__main__":
-     print("Servidor rodando em http://localhost:8080")
+    from waitress import serve
     serve(app, host="0.0.0.0", port=8080)
-     from waitress import serve
-    serve(app, host="0.0.0.0", port=8080)
+
 
 
