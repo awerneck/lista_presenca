@@ -5,9 +5,12 @@ import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, session
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 from io import StringIO
 from waitress import serve
+credenciais = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", scope)
+
 
 # ============================================================
 # CONFIGURAÇÃO BÁSICA DO FLASK
@@ -118,4 +121,5 @@ if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
      from waitress import serve
     serve(app, host="0.0.0.0", port=8080)
+
 
