@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 TOKEN = None
 EXPIRY = None
-TTL_SECONDS = 120  # tempo padrão (pode sobrescrever via ENV se quiser)
+TTL_SECONDS = 60  # token válido por 60s
 
 def _now():
     return datetime.utcnow()
@@ -12,7 +12,7 @@ def _now():
 def gerar_token(ttl_seconds: int = None):
     global TOKEN, EXPIRY
     ttl = TTL_SECONDS if ttl_seconds is None else ttl_seconds
-    TOKEN = secrets.token_urlsafe(16)
+    TOKEN = secrets.token_urlsafe(12)
     EXPIRY = _now() + timedelta(seconds=ttl)
     return TOKEN
 
@@ -40,8 +40,4 @@ def segundos_restantes():
     return int(diff) if diff > 0 else 0
 
 def invalidar_token():
-    """
-    Invalida o token atual e gera um novo imediatamente.
-    Retorna o novo token.
-    """
     return gerar_token()
