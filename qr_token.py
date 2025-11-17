@@ -1,22 +1,47 @@
-import time
+# qr_token.py
 import secrets
+from datetime import datetime, timedelta
 
-TOKEN_VALIDO = None
-EXPIRA = 0
+TOKEN = None
+EXPIRY = None
+TTL_SECONDS = 120  # tempo padrão (pode sobrescrever via ENV se quiser)
 
+def _now():
+    return datetime.utcnow()
 
-def gerar_token():
-    global TOKEN_VALIDO, EXPIRA
-    TOKEN_VALIDO = secrets.token_hex(3)
-    EXPIRA = time.time() + 60  # expira em 60s
-    return TOKEN_VALIDO
-
-
-def validar_token(token):
-    return token == TOKEN_VALIDO and time.time() < EXPIRA
-
+def gerar_token(ttl_seconds: int = None):
+    global TOKEN, EXPIRY
+    ttl = TTL_SECONDS if ttl_seconds is None else ttl_seconds
+    TOKEN = secrets.token_urlsafe(16)
+    EXPIRY = _now() + timedelta(seconds=ttl)
+    return TOKEN
 
 def token_atual():
-    if time.time() >= EXPIRA:
+    global TOKEN, EXPIRY
+    if TOKEN is None or EXPIRY is None or _now() >= EXPIRY:
         return gerar_token()
-    return TOKEN_VALIDO
+    return TOKEN
+
+def validar_token(token: str):
+    global TOKEN, EXPIRY
+    if not token or TOKEN is None:
+        return False
+    if token != TOKEN:
+        return False
+    if _now() >= EXPIRY:
+        return False
+    return True
+
+def segundos_restantes():
+    global EXPIRY
+    if EXPIRY is None:
+        return 0
+    diff = (EXPIRY - _now()).total_seconds()
+    return int(diff) if diff > 0 else 0
+
+def invalidar_token():
+    """
+    Invalida o token atual e gera um novo imediatamente.
+    Retorna o novo token.
+    """
+    return gerar_token()
