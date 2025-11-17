@@ -1,44 +1,63 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Painel Administrativo</title>
-    <style>
-        body { font-family: Arial; text-align: center; margin: 40px; }
-        table { margin: auto; border-collapse: collapse; width: 85%; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
-        th { background: #eee; }
-        form { margin-bottom: 20px; }
-        input { padding: 6px; margin: 4px; }
-        button { padding: 8px 20px; cursor: pointer; background: #2d89ef; color: white; border: none; border-radius: 4px; }
-        button:hover { background: #1e5cb3; }
-        a.logout { display: inline-block; margin-top: 20px; padding: 8px 20px; background: #999; color: #fff; text-decoration: none; border-radius: 4px; }
-        a.logout:hover { background: #666; }
-    </style>
+<meta charset="utf-8">
+<title>Admin - Presenças</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <h2>Painel de Presenças</h2>
+<body style="font-family:Arial;margin:20px">
+  <h2>Dashboard</h2>
+  <p><a href="/export">Exportar CSV</a> | <a href="/logout">Sair</a></p>
 
-    <form method="GET">
-        <input type="text" name="termo" placeholder="Buscar por nome, matrícula ou setor" value="{{ termo }}">
-        <input type="date" name="data" value="{{ data }}">
-        <button type="submit">Filtrar</button>
-    </form>
+  <div style="width:80%;max-width:900px">
+    <h3>Presenças por dia</h3>
+    <canvas id="chartDay"></canvas>
+  </div>
 
-    {% if presencas|length > 1 %}
-        <table>
-            {% for linha in presencas %}
-                <tr>
-                    {% for celula in linha %}
-                        <td>{{ celula }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>Nenhuma presença encontrada.</p>
-    {% endif %}
+  <div style="width:80%;max-width:900px;margin-top:30px">
+    <h3>Presenças por setor</h3>
+    <canvas id="chartSetor"></canvas>
+  </div>
 
-    <a class="logout" href="{{ url_for('logout') }}">Sair</a>
+  <div style="margin-top:30px">
+    <h3>Registros</h3>
+    <table border="1" cellpadding="6" id="tableRecords"></table>
+  </div>
+
+<script>
+async function loadData(){
+  const r = await fetch('/admin/data');
+  const j = await r.json();
+
+  // Day
+  const days = j.by_day.map(x => x.Data);
+  const counts = j.by_day.map(x => x.count);
+  new Chart(document.getElementById('chartDay'), { type: 'bar', data: { labels: days, datasets:[{ label:'Presenças', data: counts }] } });
+
+  // Setor
+  const setores = j.by_setor.map(x => x.Setor);
+  const scounts = j.by_setor.map(x => x.count);
+  new Chart(document.getElementById('chartSetor'), { type: 'bar', data: { labels: setores, datasets:[{ label:'Por Setor', data: scounts }] } });
+
+  // Table
+  const table = document.getElementById('tableRecords');
+  if(j.records.length === 0){
+    table.innerHTML = "<tr><td>Sem registros</td></tr>";
+    return;
+  }
+  // Headers
+  const keys = Object.keys(j.records[0]);
+  let html = "<tr>";
+  keys.forEach(k=> html += `<th>${k}</th>`);
+  html += "</tr>";
+  j.records.forEach(r=>{
+    html += "<tr>";
+    keys.forEach(k=> html += `<td>${r[k]||''}</td>`);
+    html += "</tr>";
+  });
+  table.innerHTML = html;
+}
+loadData();
+</script>
 </body>
 </html>
