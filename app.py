@@ -25,7 +25,7 @@ TOKEN_TTL_SECONDS = int(os.environ.get("TOKEN_TTL_SECONDS", "300"))
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "https://lista-presenca-kdwr.onrender.com")
 SHEET_NAME = os.environ.get("SHEET_NAME", "Lista de Presença")
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
-ADMIN_PASS = os.environ.get("ADMIN_PASS", "1234")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "C0rd1tram")
 FLASK_SECRET = os.environ.get("FLASK_SECRET", "chave_secreta_segura")
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
@@ -77,7 +77,7 @@ def limpar_tokens_expirados():
 def read_sheet_df():
     regs = sheet.get_all_records()
     if not regs:
-        cols = ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]
+        cols = ["Nome","Matrícula","Setor","Data/Hora","IP"]
         return pd.DataFrame(columns=cols)
     return pd.DataFrame(regs)
 
@@ -212,8 +212,6 @@ def presenca():
                                matricula=matricula,
                                datahora=datahora,
                                ip=ip,
-                               local=cidade_estado,
-                               pais=pais,
                                tema=tema,
                                assinatura=assinatura)
 
@@ -253,7 +251,7 @@ def admin_data():
     if df.empty:
         return jsonify({"by_day":[], "by_month":[], "by_setor":[], "records":[]})
 
-    for c in ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]:
+    for c in ["Nome","Matrícula","Setor","Data/Hora","IP"]:
         if c not in df.columns:
             df[c] = ""
 
@@ -416,3 +414,4 @@ def logout():
 # -------------------------
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
+
