@@ -11,6 +11,13 @@
           <p>Horário: <strong>{{ datahora }}</strong></p>
           <p>Local aproximado: <strong>{{ local }}</strong>{% if pais %} — {{ pais }}{% endif %}</p>
           <p class="small text-muted">IP: {{ ip }}</p>
+          <hr>
+          {% if tema %}
+            <p class="mb-1"><strong>Tema:</strong> {{ tema }}</p>
+          {% endif %}
+          {% if assinatura %}
+            <p class="mb-1"><strong>Responsável:</strong> {{ assinatura }}</p>
+          {% endif %}
           <a class="btn btn-secondary w-100" href="/">Voltar</a>
 
         {% else %}
