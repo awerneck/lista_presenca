@@ -1,34 +1,26 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Registrar Presença</title>
-    <style>
-        body { font-family: Arial; text-align: center; margin-top: 50px; }
-        input, button { padding: 10px; margin: 10px; width: 260px; }
-        h2 { color: #007b5e; }
-        .erro { color: red; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-{% if confirmacao %}
-    <h2>Presença Confirmada!</h2>
-    <p><b>{{ nome }}</b>, registrado às <b>{{ hora }}</b>.</p>
-
-{% elif erro_duplicado %}
-    <p class="erro">Presença já registrada hoje!</p>
-    <p><b>{{ nome }}</b>, seu último registro foi às <b>{{ hora }}</b>.</p>
-
-{% else %}
-    <h2>Registrar Presença</h2>
-    <form method="POST">
-        <input type="text" name="nome" placeholder="Nome completo" required><br>
-        <input type="text" name="matricula" placeholder="Matrícula" required><br>
-        <input type="text" name="setor" placeholder="Setor" required><br>
-        <button type="submit">Confirmar</button>
-    </form>
-{% endif %}
-
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Registrar{% endblock %}
+{% block content %}
+<div class="card mx-auto" style="max-width:560px">
+  <div class="card-body">
+    {% if sucesso %}
+      <h4 class="card-title text-success">Presença confirmada</h4>
+      <p><strong>{{ nome }}</strong> — Matrícula: <strong>{{ matricula }}</strong></p>
+      <p>Horário: <strong>{{ datahora }}</strong></p>
+      <p>Local aproximado: <strong>{{ local }}</strong> {% if pais %} - {{ pais }}{% endif %}</p>
+      <p><small>IP: {{ ip }}</small></p>
+      <a class="btn btn-secondary" href="/">Voltar</a>
+    {% else %}
+      <h4 class="card-title">Registrar Presença</h4>
+      {% if erro %}<div class="alert alert-danger">{{ erro }}</div>{% endif %}
+      <form method="POST">
+        <input type="hidden" name="token" value="{{ token }}">
+        <div class="mb-2"><input class="form-control" name="nome" placeholder="Nome completo" required></div>
+        <div class="mb-2"><input class="form-control" name="matricula" placeholder="Matrícula" required></div>
+        <div class="mb-2"><input class="form-control" name="setor" placeholder="Setor" required></div>
+        <div class="d-grid"><button class="btn btn-primary" type="submit">Confirmar Presença</button></div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
