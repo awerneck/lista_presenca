@@ -104,7 +104,7 @@ def index():
     t = token_atual()
     ttl = segundos_restantes()
     qr_path = "/static/qrcode.png"  # gerado no front-end via token
-    return render_template("index.html", token=t, ttl=ttl, imagem_qrcode=qr_path)
+   return render_template("index.html", imagem_qrcode="static/qrcode.png")
 
 @app.route("/presenca", methods=["GET","POST"])
 def presenca():
@@ -249,3 +249,4 @@ def logout():
 if __name__ == "__main__":
     # em produção use gunicorn; para testes
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "8080")))
+
