@@ -1,13 +1,27 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><title>Login Admin</title></head>
-<body style="text-align:center;margin-top:40px">
-  <h3>Login Administrativo</h3>
-  {% if erro %}<div style="color:red">Usuário ou senha incorretos</div>{% endif %}
-  <form method="POST">
-    <div><input name="usuario" placeholder="Usuário" required></div>
-    <div><input name="senha" type="password" placeholder="Senha" required></div>
-    <div style="margin-top:10px"><button type="submit">Entrar</button></div>
-  </form>
+<head>
+    <meta charset="UTF-8">
+    <title>Login Admin</title>
+    <style>
+        body { text-align: center; margin-top: 60px; font-family: Arial; }
+        input, button { padding: 10px; width: 240px; margin: 10px; }
+        .erro { color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Acesso Administrativo</h2>
+
+{% if erro %}
+<p class="erro">Usuário ou senha incorretos</p>
+{% endif %}
+
+<form method="POST">
+    <input type="text" name="usuario" placeholder="Usuário" required><br>
+    <input type="password" name="senha" placeholder="Senha" required><br>
+    <button type="submit">Entrar</button>
+</form>
+
 </body>
 </html>
