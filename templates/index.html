@@ -1,9 +1,22 @@
 {% extends "base.html" %}
+{% block title %}Home{% endblock %}
 {% block content %}
-<div class="text-center">
-  <h2>Escaneie o QR Code</h2>
-  <p>Use a câmera do seu celular para registrar sua presença.</p>
-  <img src="{{ imagem_qrcode }}" alt="QR Code" class="img-fluid" style="max-width:320px;">
-  <p class="mt-3"><a class="btn btn-outline-primary" href="/presenca">Registrar manualmente</a></p>
-</div>
+<section class="text-center">
+  <h1 class="h4 mb-3">Registre sua presença</h1>
+  <p class="mb-3">Escaneie o QR Code com seu celular. Token válido por <strong>{{ ttl }}s</strong>.</p>
+
+  <div class="card mx-auto" style="max-width:360px" aria-live="polite">
+    <div class="card-body">
+      <img src="{{ imagem_qrcode }}" alt="QR Code para registrar presença" class="img-fluid d-block mx-auto" style="max-width:260px">
+      <p class="mt-2 mb-0 small text-muted">Link temporário gerado — expira automaticamente.</p>
+      <div class="mt-3">
+        <a class="btn btn-primary w-100" href="/">Gerar novo QR</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <a href="/login" class="btn btn-outline-secondary btn-sm">Painel Admin</a>
+  </div>
+</section>
 {% endblock %}
