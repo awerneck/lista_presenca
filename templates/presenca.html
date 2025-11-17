@@ -1,49 +1,10 @@
-{% extends "base.html" %}
-{% block title %}Registrar Presença{% endblock %}
-{% block content %}
-<div class="row justify-content-center">
-  <div class="col-12 col-md-7 col-lg-5">
-    <div class="card">
-      <div class="card-body">
-        {% if sucesso %}
-          <h2 class="h5 text-success" id="confirmTitle">Presença confirmada</h2>
-          <p id="confirmMsg"><strong>{{ nome }}</strong> — Matrícula: <strong>{{ matricula }}</strong></p>
-          <p>Horário: <strong>{{ datahora }}</strong></p>
-          <p>Local aproximado: <strong>{{ local }}</strong>{% if pais %} — {{ pais }}{% endif %}</p>
-          <p class="small text-muted">IP: {{ ip }}</p>
-          <hr>
-          {% if tema %}
-            <p class="mb-1"><strong>Tema:</strong> {{ tema }}</p>
-          {% endif %}
-          {% if assinatura %}
-            <p class="mb-1"><strong>Responsável:</strong> {{ assinatura }}</p>
-          {% endif %}
-          <a class="btn btn-secondary w-100" href="/">Voltar</a>
-
-        {% else %}
-          <h2 class="h5">Registrar Presença</h2>
-          {% if erro %}<div class="alert alert-danger" role="alert">{{ erro }}</div>{% endif %}
-          <form method="POST" novalidate aria-labelledby="formTitle">
-            <input type="hidden" name="token" value="{{ token }}">
-            <div class="mb-2">
-              <label class="form-label visually-hidden" for="nome">Nome completo</label>
-              <input id="nome" class="form-control" name="nome" placeholder="Nome completo" required aria-required="true">
-            </div>
-            <div class="mb-2">
-              <label class="form-label visually-hidden" for="matricula">Matrícula</label>
-              <input id="matricula" class="form-control" name="matricula" placeholder="Matrícula" required aria-required="true">
-            </div>
-            <div class="mb-2">
-              <label class="form-label visually-hidden" for="setor">Setor</label>
-              <input id="setor" class="form-control" name="setor" placeholder="Setor" required aria-required="true">
-            </div>
-            <div class="d-grid">
-              <button class="btn btn-primary" type="submit" id="submitBtn">Confirmar Presença</button>
-            </div>
-          </form>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
+<form method="POST" class="container p-4">
+  <input type="hidden" name="token" value="{{ token }}">
+  <label>Nome</label>
+  <input name="nome" required class="form-control">
+  <label>Matrícula</label>
+  <input name="matricula" required class="form-control">
+  <label>Setor</label>
+  <input name="setor" required class="form-control">
+  <button class="btn btn-success mt-3">Confirmar Presença</button>
+</form>
