@@ -8,7 +8,7 @@ import io
 from datetime import datetime, timedelta
 from flask import (
     Flask, render_template, request, redirect, url_for, session,
-    jsonify, make_response, send_file
+    jsonify, make_response, send_file, safe_join
 )
 import pandas as pd
 import gspread
@@ -25,10 +25,10 @@ TOKEN_TTL_SECONDS = int(os.environ.get("TOKEN_TTL_SECONDS", "300"))
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "https://lista-presenca-kdwr.onrender.com")
 SHEET_NAME = os.environ.get("SHEET_NAME", "Lista de Presença")
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
-ADMIN_PASS = os.environ.get("ADMIN_PASS", "C0rd1tran")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "1234")
 FLASK_SECRET = os.environ.get("FLASK_SECRET", "chave_secreta_segura")
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = FLASK_SECRET
 
 # -------------------------
@@ -92,7 +92,7 @@ def gerar_qrcode_arquivo(token):
     return path
 
 # -------------------------
-# IP + geo (ip-api.com) - uses X-Forwarded-For
+# IP + geo (ip-api.com)
 # -------------------------
 def get_client_ip():
     xff = request.headers.get("X-Forwarded-For", "")
@@ -330,4 +330,3 @@ def logout():
 # -------------------------
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
-
