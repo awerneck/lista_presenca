@@ -1,11 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><title>QR Presença</title></head>
-<body style="text-align:center;margin-top:40px">
-  <h2>Escaneie o QR Code para registrar presença</h2>
-  <img src="{{ imagem_qrcode }}" width="260" alt="QR Code"><br>
-  <small>Token válido por {{ ttl }} segundos</small>
-  <p><a href="/">Gerar novo QR</a></p>
-  <p><a href="/login">Login admin</a></p>
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code - Presença</title>
+    <style>
+        body { text-align: center; margin-top: 50px; font-family: Arial; }
+        img { width: 260px; }
+    </style>
+</head>
+<body>
+    <h2>Escaneie o QR Code para registrar sua presença</h2>
+    <img src="{{ imagem_qrcode }}" alt="QR Code">
 </body>
 </html>
