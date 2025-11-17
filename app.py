@@ -1,5 +1,6 @@
 import os
 import json
+import pandas as pd
 import qrcode
 from flask import Flask, render_template, request, redirect, url_for, session
 from oauth2client.service_account import ServiceAccountCredentials
@@ -59,7 +60,6 @@ def presenca():
         matricula = request.form["matricula"]
         setor = request.form["setor"]
         datahora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
         planilha.append_row([nome, matricula, setor, datahora])
         return render_template("presenca.html", sucesso=True)
     return render_template("presenca.html", sucesso=False)
@@ -117,6 +117,7 @@ def logout():
 if __name__ == "__main__":
     from waitress import serve
     serve(app, host="0.0.0.0", port=8080)
+
 
 
 
