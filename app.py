@@ -77,7 +77,7 @@ def limpar_tokens_expirados():
 def read_sheet_df():
     regs = sheet.get_all_records()
     if not regs:
-        cols = ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]
+        cols = ["Nome","Matrícula","Setor","Data/Hora","IP"]
         return pd.DataFrame(columns=cols)
     return pd.DataFrame(regs)
 
@@ -212,8 +212,6 @@ def presenca():
                                matricula=matricula,
                                datahora=datahora,
                                ip=ip,
-                               local=cidade_estado,
-                               pais=pais,
                                tema=tema,
                                assinatura=assinatura)
 
@@ -253,7 +251,7 @@ def admin_data():
     if df.empty:
         return jsonify({"by_day":[], "by_month":[], "by_setor":[], "records":[]})
 
-    for c in ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]:
+    for c in ["Nome","Matrícula","Setor","Data/Hora","IP"]:
         if c not in df.columns:
             df[c] = ""
 
@@ -416,4 +414,5 @@ def logout():
 # -------------------------
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
+
 
