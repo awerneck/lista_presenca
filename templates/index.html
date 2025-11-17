@@ -1,18 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Controle de Presença</title>
-    <style>
-        body { text-align: center; font-family: Arial; margin-top: 50px; }
-        img { width: 250px; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <h2>Controle de Presença Online</h2>
-    <p>Escaneie o QR Code abaixo para registrar sua presença:</p>
-    <img src="{{ url_for('static', filename='qrcode.png') }}" alt="QR Code">
+<head><meta charset="utf-8"><title>QR Presença</title></head>
+<body style="text-align:center;margin-top:40px">
+  <h2>Escaneie o QR Code para registrar presença</h2>
+  <img src="{{ imagem_qrcode }}" width="260" alt="QR Code"><br>
+  <small>Token válido por {{ ttl }} segundos</small>
+  <p><a href="/">Gerar novo QR</a></p>
+  <p><a href="/login">Login admin</a></p>
 </body>
 </html>
-
-
