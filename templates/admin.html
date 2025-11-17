@@ -1,45 +1,110 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Painel Admin</title>
-    <style>
-        body { font-family: Arial; text-align: center; margin: 20px; }
-        table { border-collapse: collapse; width: 90%; margin: auto; }
-        th, td { border: 1px solid #999; padding: 8px; }
-        th { background: #eee; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
+<h3>Painel Administrativo</h3>
 
-<h2>Registros de Presença</h2>
+<div class="card mb-3 p-3">
+  <form id="filterForm" class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label">Nome</label>
+      <input id="fNome" class="form-control" name="nome" placeholder="Pesquisar por nome">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Data from (dd/mm/YYYY)</label>
+      <input id="fFrom" class="form-control" name="data_from" placeholder="01/01/2025">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Data to (dd/mm/YYYY)</label>
+      <input id="fTo" class="form-control" name="data_to" placeholder="31/12/2025">
+    </div>
+    <div class="col-md-4">
+      <button id="btnFilter" class="btn btn-primary">Aplicar filtros</button>
+      <a id="csvLink" class="btn btn-outline-secondary ms-2" href="#">Exportar CSV</a>
+      <a id="pdfLink" class="btn btn-outline-secondary ms-2" href="#">Exportar PDF</a>
+    </div>
+  </form>
+</div>
 
-<table>
-    <tr>
-        <th>Nome</th>
-        <th>Matrícula</th>
-        <th>Setor</th>
-        <th>Data/Hora</th>
-        <th>IP</th>
-        <th>Cidade/Estado</th>
-        <th>País</th>
-    </tr>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card p-3 mb-3">
+      <h6>Presenças por dia</h6>
+      <canvas id="chartDay"></canvas>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3 mb-3">
+      <h6>Presenças por mês</h6>
+      <canvas id="chartMonth"></canvas>
+    </div>
+  </div>
+</div>
 
-    {% for r in registros %}
-    <tr>
-        <td>{{ r["Nome"] }}</td>
-        <td>{{ r["Matrícula"] }}</td>
-        <td>{{ r["Setor"] }}</td>
-        <td>{{ r["Data/Hora"] }}</td>
-        <td>{{ r["IP"] }}</td>
-        <td>{{ r["Cidade/Estado"] }}</td>
-        <td>{{ r["País"] }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="card p-3 mb-3">
+  <h6>Presenças por setor</h6>
+  <canvas id="chartSetor"></canvas>
+</div>
 
-<br>
-<a href="{{ url_for('logout') }}">Sair</a>
+<div class="card p-3">
+  <h6>Registros</h6>
+  <div id="tableWrap" style="overflow:auto; max-height:400px"></div>
+</div>
 
-</body>
-</html>
+<script>
+async function loadFiltered(){
+  const nome = document.getElementById('fNome').value;
+  const data_from = document.getElementById('fFrom').value;
+  const data_to = document.getElementById('fTo').value;
+  const qs = new URLSearchParams({nome, data_from, data_to});
+  const r = await fetch('/admin/data?'+qs.toString());
+  const j = await r.json();
+
+  // charts
+  const dayLabels = j.by_day.map(x=>x.Data);
+  const dayCounts = j.by_day.map(x=>x.count);
+  const monthLabels = j.by_month.map(x=>x.Month || x.Month);
+  const monthCounts = j.by_month.map(x=>x.count);
+  const setorLabels = j.by_setor.map(x=>x.Setor);
+  const setorCounts = j.by_setor.map(x=>x.count);
+
+  // destroy old charts if exist
+  if(window.cDay) window.cDay.destroy();
+  window.cDay = new Chart(document.getElementById('chartDay'), { type:'bar', data:{ labels:dayLabels, datasets:[{label:'Presenças', data:dayCounts, backgroundColor:'rgba(13,110,253,0.6)'}] }});
+
+  if(window.cMonth) window.cMonth.destroy();
+  window.cMonth = new Chart(document.getElementById('chartMonth'), { type:'bar', data:{ labels:j.by_month.map(x=>x.Month), datasets:[{label:'Presenças', data:j.by_month.map(x=>x.count), backgroundColor:'rgba(25,135,84,0.6)'}] }});
+
+  if(window.cSetor) window.cSetor.destroy();
+  window.cSetor = new Chart(document.getElementById('chartSetor'), { type:'bar', data:{ labels:j.by_setor.map(x=>x.Setor), datasets:[{label:'Por Setor', data:j.by_setor.map(x=>x.count), backgroundColor:'rgba(220,53,69,0.6)'}] }});
+
+  // table
+  const rec = j.records;
+  if(rec.length===0){
+    document.getElementById('tableWrap').innerHTML = '<div class="p-3">Sem registros</div>';
+  } else {
+    const keys = Object.keys(rec[0]);
+    let html = '<table class="table table-sm table-striped"><thead><tr>';
+    keys.forEach(k=> html += `<th>${k}</th>`);
+    html += '</tr></thead><tbody>';
+    rec.forEach(r=>{
+      html += '<tr>';
+      keys.forEach(k=> html += `<td>${r[k]||''}</td>`);
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('tableWrap').innerHTML = html;
+  }
+
+  // update export links
+  const qsStr = qs.toString();
+  document.getElementById('csvLink').href = '/export?'+qsStr;
+  document.getElementById('pdfLink').href = '/export_pdf?'+qsStr;
+}
+
+document.getElementById('btnFilter').addEventListener('click', function(e){
+  e.preventDefault();
+  loadFiltered();
+});
+// initial load
+loadFiltered();
+</script>
+{% endblock %}
