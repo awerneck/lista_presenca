@@ -1,63 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<title>Admin - Presenças</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <title>Painel Admin</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin: 20px; }
+        table { border-collapse: collapse; width: 90%; margin: auto; }
+        th, td { border: 1px solid #999; padding: 8px; }
+        th { background: #eee; }
+    </style>
 </head>
-<body style="font-family:Arial;margin:20px">
-  <h2>Dashboard</h2>
-  <p><a href="/export">Exportar CSV</a> | <a href="/logout">Sair</a></p>
+<body>
 
-  <div style="width:80%;max-width:900px">
-    <h3>Presenças por dia</h3>
-    <canvas id="chartDay"></canvas>
-  </div>
+<h2>Registros de Presença</h2>
 
-  <div style="width:80%;max-width:900px;margin-top:30px">
-    <h3>Presenças por setor</h3>
-    <canvas id="chartSetor"></canvas>
-  </div>
+<table>
+    <tr>
+        <th>Nome</th>
+        <th>Matrícula</th>
+        <th>Setor</th>
+        <th>Data/Hora</th>
+        <th>IP</th>
+        <th>Cidade/Estado</th>
+        <th>País</th>
+    </tr>
 
-  <div style="margin-top:30px">
-    <h3>Registros</h3>
-    <table border="1" cellpadding="6" id="tableRecords"></table>
-  </div>
+    {% for r in registros %}
+    <tr>
+        <td>{{ r["Nome"] }}</td>
+        <td>{{ r["Matrícula"] }}</td>
+        <td>{{ r["Setor"] }}</td>
+        <td>{{ r["Data/Hora"] }}</td>
+        <td>{{ r["IP"] }}</td>
+        <td>{{ r["Cidade/Estado"] }}</td>
+        <td>{{ r["País"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
-<script>
-async function loadData(){
-  const r = await fetch('/admin/data');
-  const j = await r.json();
+<br>
+<a href="{{ url_for('logout') }}">Sair</a>
 
-  // Day
-  const days = j.by_day.map(x => x.Data);
-  const counts = j.by_day.map(x => x.count);
-  new Chart(document.getElementById('chartDay'), { type: 'bar', data: { labels: days, datasets:[{ label:'Presenças', data: counts }] } });
-
-  // Setor
-  const setores = j.by_setor.map(x => x.Setor);
-  const scounts = j.by_setor.map(x => x.count);
-  new Chart(document.getElementById('chartSetor'), { type: 'bar', data: { labels: setores, datasets:[{ label:'Por Setor', data: scounts }] } });
-
-  // Table
-  const table = document.getElementById('tableRecords');
-  if(j.records.length === 0){
-    table.innerHTML = "<tr><td>Sem registros</td></tr>";
-    return;
-  }
-  // Headers
-  const keys = Object.keys(j.records[0]);
-  let html = "<tr>";
-  keys.forEach(k=> html += `<th>${k}</th>`);
-  html += "</tr>";
-  j.records.forEach(r=>{
-    html += "<tr>";
-    keys.forEach(k=> html += `<td>${r[k]||''}</td>`);
-    html += "</tr>";
-  });
-  table.innerHTML = html;
-}
-loadData();
-</script>
 </body>
 </html>
