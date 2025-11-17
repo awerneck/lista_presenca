@@ -78,9 +78,7 @@
           <th scope="col">Setor</th>
           <th scope="col">Data/Hora</th>
           <th scope="col">IP</th>
-          <th scope="col">Cidade/Estado</th>
-          <th scope="col">País</th>
-        </tr>
+          </tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -109,8 +107,7 @@ async function carregarDados(){
       <td>${r["Setor"]||''}</td>
       <td>${r["Data/Hora"]||''}</td>
       <td>${r["IP"]||''}</td>
-      <td>${r["Cidade/Estado"]||''}</td>
-      <td>${r["País"]||''}</td>
+      
     `;
     tbody.appendChild(tr);
   });
@@ -161,3 +158,4 @@ window.addEventListener('load', carregarDados);
 </script>
 
 {% endblock %}
+
