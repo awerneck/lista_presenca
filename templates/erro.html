@@ -1,8 +1,8 @@
-<!doctype html>
-<html lang="pt-BR">
-<head><meta charset="utf-8"><title>Erro</title></head>
-<body style="font-family:Arial;text-align:center;margin-top:40px">
-  <h3>{{ mensagem }}</h3>
-  <p><a href="/">Voltar</a></p>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="alert alert-warning text-center">
+  <h5>Atenção</h5>
+  <p>{{ mensagem }}</p>
+  <a class="btn btn-primary" href="/">Voltar</a>
+</div>
+{% endblock %}
