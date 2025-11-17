@@ -4,6 +4,7 @@ from flask import (
     Flask, render_template, request, redirect, url_for, jsonify, send_file, make_response
 )
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
 from reportlab.lib.pagesizes import landscape, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
@@ -24,7 +25,7 @@ def read_df():
     return pd.DataFrame(recs)
 
 def append_presence(nome, matricula, setor, ip):
-    ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    ts = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m/%Y %H:%M:%S")
     gapi.append_row([nome, matricula, setor, ts, ip])
     return ts
 
@@ -174,3 +175,4 @@ def admin_invalidate_token():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT","8080")))
+
