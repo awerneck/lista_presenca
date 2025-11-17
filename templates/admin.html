@@ -28,6 +28,24 @@
   </div>
 </div>
 
+<!-- Config card -->
+<div class="card mb-3 p-3">
+  <h6>Configuração: Tema do DQS & Assinatura</h6>
+  <form id="configForm" method="POST" action="/admin/config" class="row g-2">
+    <div class="col-12 col-md-6">
+      <label for="temaInput" class="form-label visually-hidden">Tema</label>
+      <input id="temaInput" name="tema" class="form-control" placeholder="Tema do DQS" value="{{ config.tema if config else '' }}">
+    </div>
+    <div class="col-12 col-md-4">
+      <label for="assinaturaInput" class="form-label visually-hidden">Assinatura</label>
+      <input id="assinaturaInput" name="assinatura" class="form-control" placeholder="Assinatura" value="{{ config.assinatura if config else '' }}">
+    </div>
+    <div class="col-12 col-md-2 d-grid">
+      <button class="btn btn-success" type="submit">Salvar</button>
+    </div>
+  </form>
+</div>
+
 <div class="row g-3">
   <div class="col-12 col-md-6">
     <div class="card p-3 h-100">
