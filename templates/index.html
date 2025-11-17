@@ -1,62 +1,31 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-bs-theme="dark">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Presença</title>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Lista de Presença</title>
 
     <style>
         body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .qr-container {
+            font-family: Arial, sans-serif;
             text-align: center;
-            width: 100%;
-            max-width: 400px;
+            margin-top: 60px;
         }
-        .refresh-text {
-            font-size: 0.9rem;
-            opacity: .7;
+        img {
+            width: 300px;
+            height: 300px;
         }
     </style>
-</head>
 
+</head>
 <body>
 
-<div class="qr-container">
-    <h3 class="mb-3">Escaneie o QR Code</h3>
+    <h2>Escaneie o QR Code</h2>
+    <p>Use a câmera do seu celular para registrar sua presença.</p>
 
-    <img id="qr-img" src="data:image/png;base64,{{ qr_code }}" 
-         alt="QR Code" class="img-fluid mb-3" style="max-width: 300px">
+    <img src="{{ imagem_qrcode }}" alt="QR Code">
 
-    <p class="refresh-text">Atualizando automaticamente a cada 120 segundos</p>
-
-    <a href="/presenca?token={{ token }}" class="btn btn-primary mt-3">
-        Registrar manualmente
-    </a>
-</div>
-
-<script>
-    setInterval(() => {
-        fetch("/")
-            .then(r => r.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, "text/html");
-                const newQr = doc.getElementById("qr-img").src;
-                document.getElementById("qr-img").src = newQr;
-            });
-    }, 60000);
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <p><a href="/presenca">Ou clique aqui para registrar manualmente</a></p>
 
 </body>
 </html>
-
