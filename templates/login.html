@@ -1,26 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Login Admin{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-12 col-md-6 col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <h3 class="h5 mb-3">Acesso Administrativo</h3>
-        {% if erro %}<div class="alert alert-danger" role="alert">Usuário ou senha incorretos</div>{% endif %}
-        <form method="POST" aria-label="Formulário de login">
-          <div class="mb-2">
-            <label class="form-label visually-hidden" for="usuario">Usuário</label>
-            <input id="usuario" class="form-control" name="usuario" placeholder="Usuário" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label visually-hidden" for="senha">Senha</label>
-            <input id="senha" class="form-control" name="senha" type="password" placeholder="Senha" required>
-          </div>
-          <div class="d-grid">
-            <button class="btn btn-primary">Entrar</button>
-          </div>
-        </form>
-      </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Acesso Administrativo</h5>
+      {% if erro %}<div class="alert alert-danger">Senha inválida</div>{% endif %}
+      <form action="/admin" method="get">
+        <div class="mb-3">
+          <label>Senha</label>
+          <input name="senha" class="form-control" type="password" required>
+        </div>
+        <button class="btn btn-primary">Entrar</button>
+      </form>
     </div>
   </div>
 </div>
