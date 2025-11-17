@@ -1,31 +1,9 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Presença</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 60px;
-        }
-        img {
-            width: 300px;
-            height: 300px;
-        }
-    </style>
-
-</head>
-<body>
-
-    <h2>Escaneie o QR Code</h2>
-    <p>Use a câmera do seu celular para registrar sua presença.</p>
-
-    <img src="{{ imagem_qrcode }}" alt="QR Code">
-
-    <p><a href="/presenca">Ou clique aqui para registrar manualmente</a></p>
-
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center">
+  <h2>Escaneie o QR Code</h2>
+  <p>Use a câmera do seu celular para registrar sua presença.</p>
+  <img src="{{ imagem_qrcode }}" alt="QR Code" class="img-fluid" style="max-width:320px;">
+  <p class="mt-3"><a class="btn btn-outline-primary" href="/presenca">Registrar manualmente</a></p>
+</div>
+{% endblock %}
