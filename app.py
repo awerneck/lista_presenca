@@ -15,14 +15,13 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from waitress import serve
 
 # -------------------------
 # CONFIG
 # -------------------------
-TOKEN_TTL_SECONDS = int(os.environ.get("TOKEN_TTL_SECONDS", "300"))  # 5 min default
+TOKEN_TTL_SECONDS = int(os.environ.get("TOKEN_TTL_SECONDS", "300"))
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "https://lista-presenca-kdwr.onrender.com")
 SHEET_NAME = os.environ.get("SHEET_NAME", "Lista de Presença")
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
@@ -35,20 +34,19 @@ app.secret_key = FLASK_SECRET
 # -------------------------
 # Google Sheets auth
 # -------------------------
-escopo = [
+SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive"
 ]
 credenciais_dict = json.loads(os.environ["GOOGLE_CREDS_JSON"])
-credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
+credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, SCOPE)
 cliente = gspread.authorize(credenciais)
 sheet = cliente.open(SHEET_NAME).sheet1
 
 # -------------------------
 # Tokens (in-memory)
 # -------------------------
-# valid_tokens: token -> expiry(datetime)
-valid_tokens = {}
+valid_tokens = {}  # token -> expiry (UTC datetime)
 
 def gerar_token():
     token = secrets.token_urlsafe(16)
@@ -73,7 +71,28 @@ def limpar_tokens_expirados():
         del valid_tokens[t]
 
 # -------------------------
-# util: ip + geo via ipapi.co
+# Helpers: sheet -> DataFrame
+# -------------------------
+def read_sheet_df():
+    regs = sheet.get_all_records()
+    if not regs:
+        cols = ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]
+        return pd.DataFrame(columns=cols)
+    return pd.DataFrame(regs)
+
+# -------------------------
+# QR generation
+# -------------------------
+def gerar_qrcode_arquivo(token):
+    url = f"{PUBLIC_URL}/presenca?token={token}"
+    img = qrcode.make(url)
+    os.makedirs("static", exist_ok=True)
+    path = os.path.join("static", "qrcode.png")
+    img.save(path)
+    return path
+
+# -------------------------
+# IP + geo (ip-api.com) - uses X-Forwarded-For
 # -------------------------
 def get_client_ip():
     xff = request.headers.get("X-Forwarded-For", "")
@@ -85,42 +104,17 @@ def lookup_ip_info(ip):
     if not ip:
         return "", "", ""
     try:
-        r = requests.get(f"https://ipapi.co/{ip}/json/", timeout=3)
-        if r.ok:
-            d = r.json()
+        r = requests.get(f"http://ip-api.com/json/{ip}?fields=status,country,regionName,city", timeout=3)
+        d = r.json()
+        if d.get("status") == "success":
             city = d.get("city", "")
-            region = d.get("region", "")
-            country = d.get("country_name", "")
+            region = d.get("regionName", "")
+            country = d.get("country", "")
             city_region = "/".join([x for x in (city, region) if x])
             return ip, city_region, country
     except Exception:
         pass
     return ip, "", ""
-
-# -------------------------
-# helper: read sheet to dataframe (with correct expected columns)
-# -------------------------
-def read_sheet_df():
-    records = sheet.get_all_records()
-    if not records:
-        # create empty df with expected columns
-        cols = ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]
-        return pd.DataFrame(columns=cols)
-    df = pd.DataFrame(records)
-    # normalize column names in case user used different headers
-    # expected keys: "Nome", "Matrícula", "Setor", "Data/Hora", "IP", "Cidade/Estado", "País"
-    return df
-
-# -------------------------
-# QR generation (with token)
-# -------------------------
-def gerar_qrcode_arquivo(token):
-    url = f"{PUBLIC_URL}/presenca?token={token}"
-    img = qrcode.make(url)
-    os.makedirs("static", exist_ok=True)
-    path = os.path.join("static", "qrcode.png")
-    img.save(path)
-    return path
 
 # -------------------------
 # Routes
@@ -146,34 +140,31 @@ def presenca():
         if not (nome and matricula and setor):
             return render_template("presenca.html", sucesso=False, erro="Preencha todos os campos.", token=token), 400
 
-        # hora no fuso de Brasília
+        # hora Brasília
         tz = pytz.timezone("America/Sao_Paulo")
         agora = datetime.now(tz)
         datahora = agora.strftime("%d/%m/%Y %H:%M:%S")
         hoje = agora.strftime("%d/%m/%Y")
 
-        # IP + localização
+        # ip real + geo
         ip = get_client_ip()
         ip, cidade_estado, pais = lookup_ip_info(ip)
 
-        # duplicidade no mesmo dia (bloqueio total)
+        # duplicidade no mesmo dia
         df = read_sheet_df()
         if not df.empty and "Matrícula" in df.columns and "Data/Hora" in df.columns:
-            # extrai data parte dd/mm/YYYY
             df["Data"] = df["Data/Hora"].astype(str).str.split(" ").str[0]
             duplicado = ((df["Matrícula"].astype(str) == str(matricula)) & (df["Data"] == hoje)).any()
             if duplicado:
-                # opcional: buscar último registro time
                 last = df[(df["Matrícula"].astype(str)==str(matricula)) & (df["Data"]==hoje)]
                 last_time = last["Data/Hora"].iloc[-1] if not last.empty else ""
                 return render_template("presenca.html", sucesso=False, erro="Presença já registrada hoje.", nome=nome, hora=last_time), 409
 
-        # append na ordem solicitada
+        # append (ordem correta)
         sheet.append_row([nome, matricula, setor, datahora, ip, cidade_estado, pais])
 
         return render_template("presenca.html", sucesso=True, nome=nome, matricula=matricula, datahora=datahora, ip=ip, local=cidade_estado, pais=pais)
 
-    # GET -> mostra formulário
     return render_template("presenca.html", sucesso=False, token=token)
 
 # -------------------------
@@ -196,13 +187,11 @@ def admin():
         return redirect(url_for("login"))
     return render_template("admin.html")
 
-# endpoint para dados do admin (com filtros)
 @app.route("/admin/data")
 def admin_data():
     if "usuario" not in session:
         return jsonify({"error":"unauthorized"}), 401
 
-    # filtros via querystring
     nome_q = request.args.get("nome","").strip().lower()
     data_from = request.args.get("data_from","").strip()
     data_to = request.args.get("data_to","").strip()
@@ -211,33 +200,23 @@ def admin_data():
     if df.empty:
         return jsonify({"by_day":[], "by_month":[], "by_setor":[], "records":[]})
 
-    # normalize columns in case
     for c in ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]:
         if c not in df.columns:
             df[c] = ""
 
-    # apply filters
+    # filters
     if nome_q:
         df = df[df["Nome"].astype(str).str.lower().str.contains(nome_q)]
-    # data filters expect dd/mm/YYYY
     if data_from:
-        try:
-            df["DataOnly"] = df["Data/Hora"].astype(str).str.split(" ").str[0]
-            df = df[df["DataOnly"] >= data_from]
-        except:
-            pass
+        df["DataOnly"] = df["Data/Hora"].astype(str).str.split(" ").str[0]
+        df = df[df["DataOnly"] >= data_from]
     if data_to:
-        try:
-            df["DataOnly"] = df["Data/Hora"].astype(str).str.split(" ").str[0]
-            df = df[df["DataOnly"] <= data_to]
-        except:
-            pass
+        df["DataOnly"] = df["Data/Hora"].astype(str).str.split(" ").str[0]
+        df = df[df["DataOnly"] <= data_to]
 
-    # prepare aggregation: by day
     df["Data"] = df["Data/Hora"].astype(str).str.split(" ").str[0]
+
     by_day = df.groupby("Data").size().reset_index(name="count").sort_values("Data")
-    # by month
-    # derive YYYY-MM from Data/Hora -> convert
     def to_month(s):
         try:
             d = datetime.strptime(s.split(" ")[0], "%d/%m/%Y")
@@ -246,11 +225,9 @@ def admin_data():
             return ""
     df["Month"] = df["Data/Hora"].astype(str).apply(lambda s: to_month(s))
     by_month = df.groupby("Month").size().reset_index(name="count").sort_values("Month")
-    # by setor
     by_setor = df.groupby("Setor").size().reset_index(name="count").sort_values("count", ascending=False)
 
     records = df.to_dict(orient="records")
-
     return jsonify({
         "by_day": by_day.to_dict(orient="records"),
         "by_month": by_month.to_dict(orient="records"),
@@ -259,7 +236,7 @@ def admin_data():
     })
 
 # -------------------------
-# Export CSV (filtered)
+# Export CSV
 # -------------------------
 @app.route("/export")
 def export_csv():
@@ -295,7 +272,7 @@ def export_csv():
     return resp
 
 # -------------------------
-# Export PDF (filtered) using ReportLab
+# Export PDF (ReportLab)
 # -------------------------
 @app.route("/export_pdf")
 def export_pdf():
@@ -323,7 +300,6 @@ def export_pdf():
         df["DataOnly"] = df["Data/Hora"].astype(str).str.split(" ").str[0]
         df = df[df["DataOnly"] <= data_to]
 
-    # prepare table data: headers + rows (limit columns to expected)
     cols = ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]
     data = [cols]
     for _, row in df.iterrows():
