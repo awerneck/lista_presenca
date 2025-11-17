@@ -10,13 +10,15 @@
     </style>
 </head>
 <body>
-    {% if confirmacao %}
+    {% if sucesso %}
         <h2>Presença confirmada!</h2>
-        <p>Obrigado, <b>{{ nome }}</b>. Registro efetuado com sucesso.</p>
+        <p>Registro efetuado com sucesso.</p>
     {% else %}
         <h2>Registrar Presença</h2>
         <form method="POST">
             <input type="text" name="nome" placeholder="Digite seu nome" required><br>
+            <input type="text" name="matricula" placeholder="Digite sua matrícula" required><br>
+            <input type="text" name="setor" placeholder="Digite seu setor" required><br>
             <button type="submit">Confirmar</button>
         </form>
     {% endif %}
