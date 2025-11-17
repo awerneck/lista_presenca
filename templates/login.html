@@ -1,27 +1,16 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Login Admin</title>
-    <style>
-        body { text-align: center; margin-top: 60px; font-family: Arial; }
-        input, button { padding: 10px; width: 240px; margin: 10px; }
-        .erro { color: red; }
-    </style>
-</head>
-<body>
-
-<h2>Acesso Administrativo</h2>
-
-{% if erro %}
-<p class="erro">Usuário ou senha incorretos</p>
-{% endif %}
-
-<form method="POST">
-    <input type="text" name="usuario" placeholder="Usuário" required><br>
-    <input type="password" name="senha" placeholder="Senha" required><br>
-    <button type="submit">Entrar</button>
-</form>
-
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5 class="card-title">Login Administrativo</h5>
+      {% if erro %}<div class="alert alert-danger">Credenciais incorretas</div>{% endif %}
+      <form method="POST">
+        <div class="mb-2"><input class="form-control" name="usuario" placeholder="Usuário"></div>
+        <div class="mb-2"><input class="form-control" name="senha" type="password" placeholder="Senha"></div>
+        <div class="d-grid"><button class="btn btn-primary">Entrar</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
