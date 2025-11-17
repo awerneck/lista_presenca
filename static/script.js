@@ -1,30 +1,23 @@
-function toggleTheme() {
-  const theme = document.getElementById("theme");
-  theme.href = theme.href.includes("dark")
-    ? "/static/bootstrap.css"
-    : "/static/bootstrap-dark.css";
-}
+// static/script.js
+document.addEventListener('DOMContentLoaded', function(){
+  // home QR auto refresh
+  const qElem = document.getElementById('qrcode');
+  if(qElem){
+    const renderHomeQR = (token) => {
+      qElem.innerHTML = "";
+      new QRCode(qElem, {text: window.location.origin + "/presenca?token=" + token, width:260, height:260});
+    };
+    fetch('/api/token').then(r=>r.json()).then(d => renderHomeQR(d.token));
+    setInterval(()=> fetch('/api/token').then(r=>r.json()).then(d => renderHomeQR(d.token)), 60000);
+  }
 
-// Atualização do QR na Home
-if (document.getElementById("qrcode")) {
-    function refreshQRHome() {
-        fetch("/api/token")
-        .then(r => r.json())
-        .then(data =>
-        {
-            document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"),
-                window.location.origin + "/presenca?token=" + data.token
-            );
-        });
-    }
-    setInterval(refreshQRHome, 60000);
-}
-
-// Busca admin
-document.getElementById('busca')?.addEventListener('input', function () {
-  const filtro = this.value.toLowerCase();
-  document.querySelectorAll("#tabela tbody tr").forEach(tr => {
-      tr.style.display = tr.textContent.toLowerCase().includes(filtro) ? "" : "none";
+  // simple theme toggle (keeps as before)
+  const btn = document.getElementById('themeToggle');
+  btn && btn.addEventListener('click', () => {
+    const cur = document.body.getAttribute('data-theme') || 'light';
+    const nxt = cur === 'light' ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', nxt);
+    localStorage.setItem('site-theme', nxt);
+    btn.innerText = nxt === 'dark' ? 'Escuro' : 'Claro';
   });
 });
