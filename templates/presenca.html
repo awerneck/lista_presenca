@@ -1,10 +1,38 @@
-<form method="POST" class="container p-4">
-  <input type="hidden" name="token" value="{{ token }}">
-  <label>Nome</label>
-  <input name="nome" required class="form-control">
-  <label>Matrícula</label>
-  <input name="matricula" required class="form-control">
-  <label>Setor</label>
-  <input name="setor" required class="form-control">
-  <button class="btn btn-success mt-3">Confirmar Presença</button>
-</form>
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5 class="card-title">Registrar Presença</h5>
+
+      {% if erro %}
+        <div class="alert alert-danger">{{ erro }}</div>
+      {% endif %}
+
+      {% if sucesso %}
+        <div class="alert alert-success">
+          Presença registrada: <strong>{{ nome }}</strong><br>
+          Matrícula: {{ matricula }} — {{ datahora }} — IP: {{ ip }}
+        </div>
+      {% else %}
+        <form method="POST" novalidate>
+          <input type="hidden" name="token" value="{{ token }}">
+          <div class="mb-3">
+            <label class="form-label">Nome completo</label>
+            <input class="form-control" name="nome" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Matrícula</label>
+            <input class="form-control" name="matricula" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Setor</label>
+            <input class="form-control" name="setor" required>
+          </div>
+          <button class="btn btn-primary">Confirmar presença</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
