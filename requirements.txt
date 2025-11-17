@@ -6,4 +6,5 @@ waitress==3.0.0
 gunicorn==22.0.0
 pandas==2.3.3
 requests==2.32.5
-
+pytz==2025.7
+reportlab==4.0.3
