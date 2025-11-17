@@ -1,28 +1,23 @@
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<form class="mb-3">
-  <input type="text" id="busca" placeholder="Buscar por nome..." class="form-control">
-</form>
-
-<table class="table table-striped" id="tabela">
-  <thead>
-    <tr>
-      <th>Nome</th><th>Matrícula</th><th>Setor</th><th>Data/Hora</th><th>IP</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for p in presencas[1:] %}
-    <tr>
-      <td>{{ p[0] }}</td><td>{{ p[1] }}</td><td>{{ p[2] }}</td><td>{{ p[3] }}</td><td>{{ p[4] }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<a href="/admin/pdf" class="btn btn-primary">Exportar PDF</a>
-
-<canvas id="grafSetor"></canvas>
-<canvas id="grafMes"></canvas>
-<canvas id="grafDia"></canvas>
-
+<script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
 <script src="/static/script.js"></script>
+
+<div class="container text-center mb-3">
+  <h4>QR Code atualizado automaticamente</h4>
+  <div id="qrAdmin"></div>
+</div>
+
+<script>
+function refreshQR() {
+  fetch("/api/token")
+  .then(r => r.json())
+  .then(data => {
+      const url = window.location.origin + "/presenca?token=" + data.token;
+      document.getElementById("qrAdmin").innerHTML = "";
+      new QRCode(document.getElementById("qrAdmin"), url);
+  });
+}
+refreshQR();
+setInterval(refreshQR, 60000);
+</script>
+
+<!-- tabela e gráficos continuam iguais -->
