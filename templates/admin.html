@@ -1,165 +1,155 @@
 {% extends "base.html" %}
-{% block title %}Painel Admin{% endblock %}
 {% block content %}
-<h2 class="h5 mb-3">Painel Administrativo</h2>
+<div class="mb-3">
+  <h4>Painel Administrativo</h4>
+</div>
 
 <div class="card mb-3 p-3">
   <div class="row align-items-center">
-    <div class="col-12 col-md-4">
-      <h6>QR Code atual (token)</h6>
-      <div id="qrAdmin" aria-live="polite"></div>
-      <small id="ttlInfo" class="text-muted">TTL: <span id="ttlVal">{{ ttl }}</span>s</small>
+    <div class="col-md-4 text-center">
+      <h6>QR Code (admin)</h6>
+      <div id="qrAdmin"></div>
+      <div class="small text-muted">TTL: <span id="ttl">{{ ttl }}</span>s</div>
+      <div class="mt-2">
+        <button id="invalidateBtn" class="btn btn-warning btn-sm">Invalidar token (gerar novo)</button>
+      </div>
     </div>
 
-    <div class="col-12 col-md-4">
-      <h6>Contador de hoje</h6>
-      <div class="display-6" id="contadorHoje">{{ contador }}</div>
+    <div class="col-md-4 text-center">
+      <h6>Contador hoje</h6>
+      <div class="display-6" id="countToday">{{ contador }}</div>
     </div>
 
-    <div class="col-12 col-md-4">
+    <div class="col-md-4">
       <h6>Ações</h6>
       <div class="d-grid gap-2">
-        <button id="btnInvalidate" class="btn btn-warning">Invalidar token (gerar novo)</button>
-        <a id="linkCsv" class="btn btn-outline-secondary" role="button">Exportar CSV</a>
-        <a id="linkPdf" class="btn btn-outline-secondary" role="button">Exportar PDF</a>
+        <a id="exportCsv" class="btn btn-outline-secondary" role="button">Exportar CSV</a>
+        <a id="exportPdf" class="btn btn-outline-secondary" role="button">Exportar PDF</a>
       </div>
     </div>
   </div>
 </div>
 
-<!-- filtros e charts... (mantidos) -->
 <div class="card p-3 mb-3">
-  <form id="filtroForm" class="row g-2 align-items-end" aria-label="Filtros">
-    <div class="col-12 col-md-5">
-      <input id="nomeFiltro" class="form-control" placeholder="Buscar por nome (parte do nome)">
+  <form id="filters" class="row g-2">
+    <div class="col-md-5">
+      <input id="nomeFiltro" class="form-control" placeholder="Buscar por nome">
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-md-3">
       <input id="fromFiltro" type="date" class="form-control">
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-md-3">
       <input id="toFiltro" type="date" class="form-control">
     </div>
-    <div class="col-12 col-md-1 d-grid">
-      <button id="btnFiltrar" class="btn btn-primary" type="button">OK</button>
+    <div class="col-md-1">
+      <button type="button" id="btnFilter" class="btn btn-primary">OK</button>
     </div>
   </form>
 </div>
 
-<div class="row g-3">
-  <div class="col-12 col-md-6">
-    <div class="card p-3 h-100">
-      <h6>Presenças por dia</h6>
-      <div style="height:300px"><canvas id="chartDia"></canvas></div>
-    </div>
-  </div>
-  <div class="col-12 col-md-6">
-    <div class="card p-3 h-100">
-      <h6>Presenças por mês</h6>
-      <div style="height:300px"><canvas id="chartMes"></canvas></div>
-    </div>
-  </div>
-  <div class="col-12 mt-3">
+<div class="row gy-3">
+  <div class="col-md-6">
     <div class="card p-3">
-      <h6>Ranking por setor</h6>
-      <div style="height:300px"><canvas id="chartSetor"></canvas></div>
+      <h6>Presenças por dia</h6>
+      <canvas id="chartDay" height="150"></canvas>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Presenças por mês</h6>
+      <canvas id="chartMonth" height="150"></canvas>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card p-3">
+      <h6>Ranking por Setor</h6>
+      <canvas id="chartSector" height="120"></canvas>
     </div>
   </div>
 </div>
 
-<div class="card p-3 mt-3">
+<div class="card mt-3 p-3">
   <h6>Registros</h6>
   <div class="table-responsive" style="max-height:420px; overflow:auto;">
-    <table class="table table-striped table-hover table-sm" id="tabelaDados">
-      <thead class="table-light sticky-top">
-        <tr>
-          <th>Nome</th><th>Matrícula</th><th>Setor</th><th>Data/Hora</th><th>IP</th>
-        </tr>
+    <table class="table table-sm table-striped" id="tableRecords">
+      <thead class="table-light">
+        <tr><th>Nome</th><th>Matrícula</th><th>Setor</th><th>Data/Hora</th><th>IP</th></tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
 <script>
-const ADMIN_PASS = "{{ request.args.get('senha','') }}";
-async function refreshAdminData(){
-  const nome = document.getElementById('nomeFiltro').value || '';
-  const date_from = document.getElementById('fromFiltro').value || '';
-  const date_to = document.getElementById('toFiltro').value || '';
-  const qs = new URLSearchParams({nome, date_from, date_to, senha: ADMIN_PASS});
-  const res = await fetch('/admin/data?' + qs.toString());
-  const j = await res.json();
+const ADMIN_PASS = "{{ senha }}";
+function renderQR(token){
+  const url = window.location.origin + "/presenca?token=" + token;
+  document.getElementById('qrAdmin').innerHTML = "";
+  new QRCode(document.getElementById('qrAdmin'), {text: url, width:200, height:200});
+}
+async function loadAdmin(nome='', from='', to=''){
+  const qs = new URLSearchParams({senha: ADMIN_PASS, nome, date_from: from, date_to: to});
+  const r = await fetch('/admin/data?' + qs.toString());
+  const j = await r.json();
 
   // tabela
-  const tbody = document.querySelector('#tabelaDados tbody');
+  const tbody = document.querySelector('#tableRecords tbody');
   tbody.innerHTML = '';
   (j.records || []).forEach(r => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r["Nome"]||''}</td><td>${r["Matrícula"]||''}</td><td>${r["Setor"]||''}</td><td>${r["Data/Hora"]||''}</td><td>${r["IP"]||''}</td>`;
+    tr.innerHTML = `<td>${r.Nome||''}</td><td>${r['Matrícula']||''}</td><td>${r.Setor||''}</td><td>${r['Data/Hora']||''}</td><td>${r.IP||''}</td>`;
     tbody.appendChild(tr);
   });
 
   // charts
-  const byDay = j.by_day || [];
-  const byMonth = j.by_month || [];
-  const bySetor = j.by_setor || [];
+  // day
+  const dayLabels = (j.by_day||[]).map(x=>x.Data);
+  const dayData = (j.by_day||[]).map(x=>x.count);
+  // month
+  const monthLabels = (j.by_month||[]).map(x=>x.Month);
+  const monthData = (j.by_month||[]).map(x=>x.count);
+  // sector
+  const sectorLabels = (j.by_setor||[]).map(x=>x.Setor);
+  const sectorData = (j.by_setor||[]).map(x=>x.count);
 
-  const labelsDay = byDay.map(x => x.Data);
-  const dataDay = byDay.map(x => x.count);
+  // create/destroy charts (simple approach)
+  if(window.chartDay) window.chartDay.destroy();
+  if(window.chartMonth) window.chartMonth.destroy();
+  if(window.chartSector) window.chartSector.destroy();
 
-  const labelsMonth = byMonth.map(x => x.Month);
-  const dataMonth = byMonth.map(x => x.count);
+  const ctxDay = document.getElementById('chartDay').getContext('2d');
+  window.chartDay = new Chart(ctxDay, {type:'bar', data:{labels:dayLabels, datasets:[{label:'Presenças', data:dayData}]}});
 
-  const labelsSetor = bySetor.map(x => x.Setor);
-  const dataSetor = bySetor.map(x => x.count);
+  const ctxMonth = document.getElementById('chartMonth').getContext('2d');
+  window.chartMonth = new Chart(ctxMonth, {type:'bar', data:{labels:monthLabels, datasets:[{label:'Presenças', data:monthData}]}});
 
-  // destrói e recria charts (implemente sua lógica de Chart.js como já tinha)
-  // ... (supondo funções cDia,cMes,cSetor no escopo global)
+  const ctxSector = document.getElementById('chartSector').getContext('2d');
+  window.chartSector = new Chart(ctxSector, {type:'pie', data:{labels:sectorLabels, datasets:[{data:sectorData}]}});
 
-  // contador
-  document.getElementById('contadorHoje').innerText = j.contador || 0;
-
-  // links export
-  document.getElementById('linkCsv').href = '/export_csv?' + qs.toString();
-  document.getElementById('linkPdf').href = '/export_pdf?' + qs.toString();
+  document.getElementById('countToday').innerText = j.contador || 0;
+  document.getElementById('exportCsv').href = '/export_csv?senha=' + ADMIN_PASS + '&nome=' + encodeURIComponent(document.getElementById('nomeFiltro').value || '') + '&date_from=' + (document.getElementById('fromFiltro').value||'') + '&date_to=' + (document.getElementById('toFiltro').value||'');
+  document.getElementById('exportPdf').href = '/export_pdf?senha=' + ADMIN_PASS;
 }
 
-document.getElementById('btnFiltrar').addEventListener('click', refreshAdminData);
-window.addEventListener('load', function(){
-  // QR render
-  function renderQR(token){
-    const url = window.location.origin + "/presenca?token=" + token;
-    document.getElementById('qrAdmin').innerHTML = "";
-    new QRCode(document.getElementById('qrAdmin'), {text: url, width:200, height:200});
-    document.getElementById('ttlInfo').querySelector("#ttlVal").innerText = "{{ ttl }}";
-  }
+// initial render
+fetch('/api/token').then(r=>r.json()).then(d=>{ renderQR(d.token); document.getElementById('ttl').innerText = d.ttl; });
+setInterval(()=> fetch('/api/token').then(r=>r.json()).then(d=>{ renderQR(d.token); document.getElementById('ttl').innerText = d.ttl; }), 60000);
 
-  // initial token render
-  fetch('/api/token').then(r=>r.json()).then(d => renderQR(d.token));
-  // auto refresh token display every 60s
-  setInterval(()=> fetch('/api/token').then(r=>r.json()).then(d => renderQR(d.token)), 60000);
-
-  // invalidate button
-  document.getElementById('btnInvalidate').addEventListener('click', async function(){
-    const fd = new FormData();
-    fd.append('senha', ADMIN_PASS);
-    const res = await fetch('/admin/invalidate_token', {method:'POST', body: fd});
-    const j = await res.json();
-    if(j.token){
-      // atualizar QR
-      const url = window.location.origin + "/presenca?token=" + j.token;
-      document.getElementById('qrAdmin').innerHTML = "";
-      new QRCode(document.getElementById('qrAdmin'), {text: url, width:200, height:200});
-      // reset contador TTL
-      document.getElementById('ttlInfo').querySelector("#ttlVal").innerText = j.ttl || 0;
-    }
-  });
-
-  // initial data
-  refreshAdminData();
-  // auto refresh data (contador, tabela) a cada 30s
-  setInterval(refreshAdminData, 30000);
+// invalidate button
+document.getElementById('invalidateBtn').addEventListener('click', async ()=>{
+  const fd = new FormData();
+  fd.append('senha', ADMIN_PASS);
+  const res = await fetch('/admin/invalidate_token', {method:'POST', body:fd});
+  const j = await res.json();
+  if(j.token) renderQR(j.token);
 });
+
+// filters
+document.getElementById('btnFilter').addEventListener('click', ()=> {
+  loadAdmin(document.getElementById('nomeFiltro').value, document.getElementById('fromFiltro').value, document.getElementById('toFiltro').value);
+});
+
+// load first time
+loadAdmin();
 </script>
 {% endblock %}
