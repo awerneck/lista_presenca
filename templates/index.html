@@ -1,22 +1,22 @@
-{% extends "base.html" %}
-{% block title %}Home{% endblock %}
-{% block content %}
-<section class="text-center">
-  <h1 class="h4 mb-3">Registre sua presença</h1>
-  <p class="mb-3">Escaneie o QR Code com seu celular. Token válido por <strong>{{ ttl }}s</strong>.</p>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <title>QR Presença</title>
+  <link rel="stylesheet" href="/static/bootstrap-dark.css" id="theme">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
+  <script src="/static/script.js"></script>
+</head>
+<body>
+<div class="container text-center pt-5">
+  <h2>Escaneie para registrar presença</h2>
+  <div id="qrcode"></div>
+  <button onclick="toggleTheme()">Tema</button>
+</div>
 
-  <div class="card mx-auto" style="max-width:360px" aria-live="polite">
-    <div class="card-body">
-      <img src="{{ imagem_qrcode }}" alt="QR Code para registrar presença" class="img-fluid d-block mx-auto" style="max-width:260px">
-      <p class="mt-2 mb-0 small text-muted">Link temporário gerado — expira automaticamente.</p>
-      <div class="mt-3">
-        <a class="btn btn-primary w-100" href="/">Gerar novo QR</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="mt-4">
-    <a href="/login" class="btn btn-outline-secondary btn-sm">Painel Admin</a>
-  </div>
-</section>
-{% endblock %}
+<script>
+new QRCode(document.getElementById("qrcode"),
+    window.location.origin + "/presenca?token={{ token }}"
+);
+</script>
+</body>
+</html>
