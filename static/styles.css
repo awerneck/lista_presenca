@@ -1,30 +1,4 @@
-:root{
-  --bg:#f8f9fa;
-  --card:#ffffff;
-  --text:#212529;
-  --muted:#6c757d;
-  --primary:#0d6efd;
-}
-
-[data-theme="dark"]{
-  --bg:#0b1220;
-  --card:#0f1724;
-  --text:#e6eef8;
-  --muted:#9fb2cf;
-  --primary:#66a3ff;
-}
-
-body{ background:var(--bg); color:var(--text); }
-.card{ background:var(--card); color:var(--text); }
-.table thead th{ background: rgba(0,0,0,0.04); }
-
-/* focus visibility for accessibility */
-:focus{ outline: 3px solid rgba(13,110,253,0.25); outline-offset:2px; }
-
-/* responsive tweaks */
-@media (max-width:576px){
-  .navbar .btn{ font-size:0.8rem; padding:0.35rem 0.6rem; }
-}
-
-/* small helpers */
-.visually-hidden { position:absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap; }
+/* simples ajuste visual */
+body { background: #f8f9fa; }
+.card { border-radius: 8px; }
+img[alt="QR Code"] { border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
