@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 TOKEN = None
 EXPIRY = None
-TTL_SECONDS = 60  # token válido por 60s
+TTL_SECONDS = 120  # token válido por 60s
 
 def _now():
     return datetime.utcnow()
