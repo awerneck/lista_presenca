@@ -1,37 +1,41 @@
 {% extends "base.html" %}
+{% block title %}Registrar Presença{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card p-3">
-      <h5 class="card-title">Registrar Presença</h5>
+  <div class="col-12 col-md-7 col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        {% if sucesso %}
+          <h2 class="h5 text-success" id="confirmTitle">Presença confirmada</h2>
+          <p id="confirmMsg"><strong>{{ nome }}</strong> — Matrícula: <strong>{{ matricula }}</strong></p>
+          <p>Horário: <strong>{{ datahora }}</strong></p>
+          <p>Local aproximado: <strong>{{ local }}</strong>{% if pais %} — {{ pais }}{% endif %}</p>
+          <p class="small text-muted">IP: {{ ip }}</p>
+          <a class="btn btn-secondary w-100" href="/">Voltar</a>
 
-      {% if erro %}
-        <div class="alert alert-danger">{{ erro }}</div>
-      {% endif %}
-
-      {% if sucesso %}
-        <div class="alert alert-success">
-          Presença registrada: <strong>{{ nome }}</strong><br>
-          Matrícula: {{ matricula }} — {{ datahora }} — IP: {{ ip }}
-        </div>
-      {% else %}
-        <form method="POST" novalidate>
-          <input type="hidden" name="token" value="{{ token }}">
-          <div class="mb-3">
-            <label class="form-label">Nome completo</label>
-            <input class="form-control" name="nome" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Matrícula</label>
-            <input class="form-control" name="matricula" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Setor</label>
-            <input class="form-control" name="setor" required>
-          </div>
-          <button class="btn btn-primary">Confirmar presença</button>
-        </form>
-      {% endif %}
+        {% else %}
+          <h2 class="h5">Registrar Presença</h2>
+          {% if erro %}<div class="alert alert-danger" role="alert">{{ erro }}</div>{% endif %}
+          <form method="POST" novalidate aria-labelledby="formTitle">
+            <input type="hidden" name="token" value="{{ token }}">
+            <div class="mb-2">
+              <label class="form-label visually-hidden" for="nome">Nome completo</label>
+              <input id="nome" class="form-control" name="nome" placeholder="Nome completo" required aria-required="true">
+            </div>
+            <div class="mb-2">
+              <label class="form-label visually-hidden" for="matricula">Matrícula</label>
+              <input id="matricula" class="form-control" name="matricula" placeholder="Matrícula" required aria-required="true">
+            </div>
+            <div class="mb-2">
+              <label class="form-label visually-hidden" for="setor">Setor</label>
+              <input id="setor" class="form-control" name="setor" placeholder="Setor" required aria-required="true">
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-primary" type="submit" id="submitBtn">Confirmar Presença</button>
+            </div>
+          </form>
+        {% endif %}
+      </div>
     </div>
   </div>
 </div>
