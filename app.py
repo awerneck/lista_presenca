@@ -2,13 +2,12 @@ import os
 import json
 import qrcode
 import requests
-import pytz
 import secrets
 import io
 from datetime import datetime, timedelta
 from flask import (
     Flask, render_template, request, redirect, url_for, session,
-    jsonify, make_response, send_file, safe_join
+    jsonify, make_response, send_file
 )
 import pandas as pd
 import gspread
@@ -17,6 +16,7 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from waitress import serve
+import pytz
 
 # -------------------------
 # CONFIG
@@ -38,6 +38,7 @@ SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive"
 ]
+# GOOGLE_CREDS_JSON must contain the full JSON string of the service account
 credenciais_dict = json.loads(os.environ["GOOGLE_CREDS_JSON"])
 credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, SCOPE)
 cliente = gspread.authorize(credenciais)
@@ -79,6 +80,44 @@ def read_sheet_df():
         cols = ["Nome","Matrícula","Setor","Data/Hora","IP","Cidade/Estado","País"]
         return pd.DataFrame(columns=cols)
     return pd.DataFrame(regs)
+
+# -------------------------
+# Config sheet helpers (aba "Config")
+# -------------------------
+def ensure_config_sheet():
+    try:
+        ws = cliente.open(SHEET_NAME).worksheet("Config")
+    except Exception:
+        sh = cliente.open(SHEET_NAME)
+        ws = sh.add_worksheet(title="Config", rows="50", cols="2")
+        ws.append_row(["key", "value"])
+    return ws
+
+def get_config():
+    ws = ensure_config_sheet()
+    rows = ws.get_all_values()
+    config = {}
+    for r in rows[1:]:
+        if len(r) >= 2:
+            k = str(r[0]).strip()
+            v = str(r[1]).strip()
+            if k:
+                config[k] = v
+    return config
+
+def set_config(updates: dict):
+    ws = ensure_config_sheet()
+    rows = ws.get_all_values()
+    keys = [r[0] for r in rows]
+    # header is row index 1
+    for k, v in updates.items():
+        if k in keys:
+            idx = keys.index(k) + 1  # 0-based -> +1
+            # update_cell expects 1-based; header is row 1 so actual row = idx+1
+            ws.update_cell(idx + 1, 2, v)
+        else:
+            ws.append_row([k, v])
+    return True
 
 # -------------------------
 # QR generation
@@ -163,7 +202,20 @@ def presenca():
         # append (ordem correta)
         sheet.append_row([nome, matricula, setor, datahora, ip, cidade_estado, pais])
 
-        return render_template("presenca.html", sucesso=True, nome=nome, matricula=matricula, datahora=datahora, ip=ip, local=cidade_estado, pais=pais)
+        config = get_config()
+        tema = config.get("tema", "")
+        assinatura = config.get("assinatura", "")
+
+        return render_template("presenca.html",
+                               sucesso=True,
+                               nome=nome,
+                               matricula=matricula,
+                               datahora=datahora,
+                               ip=ip,
+                               local=cidade_estado,
+                               pais=pais,
+                               tema=tema,
+                               assinatura=assinatura)
 
     return render_template("presenca.html", sucesso=False, token=token)
 
@@ -185,7 +237,8 @@ def login():
 def admin():
     if "usuario" not in session:
         return redirect(url_for("login"))
-    return render_template("admin.html")
+    config = get_config()
+    return render_template("admin.html", config=config)
 
 @app.route("/admin/data")
 def admin_data():
@@ -234,6 +287,26 @@ def admin_data():
         "by_setor": by_setor.to_dict(orient="records"),
         "records": records
     })
+
+# Save config route
+@app.route("/admin/config", methods=["POST"])
+def admin_config():
+    if "usuario" not in session:
+        return jsonify({"error":"unauthorized"}), 401
+
+    tema = request.form.get("tema", "").strip()
+    assinatura = request.form.get("assinatura", "").strip()
+
+    updates = {}
+    if tema != "":
+        updates["tema"] = tema
+    if assinatura != "":
+        updates["assinatura"] = assinatura
+
+    if updates:
+        set_config(updates)
+
+    return redirect(url_for("admin"))
 
 # -------------------------
 # Export CSV
@@ -304,6 +377,19 @@ def export_pdf():
     data = [cols]
     for _, row in df.iterrows():
         data.append([row.get(c,"") for c in cols])
+
+    # append empty row and config
+    config = get_config()
+    tema_val = config.get("tema", "")
+    assin_val = config.get("assinatura", "")
+
+    data.append([''] * len(cols))
+    if tema_val:
+        line = ["Tema:", tema_val] + [''] * (len(cols)-2)
+        data.append(line)
+    if assin_val:
+        line = ["Assinatura:", assin_val] + [''] * (len(cols)-2)
+        data.append(line)
 
     pdf_buf = io.BytesIO()
     doc = SimpleDocTemplate(pdf_buf, pagesize=landscape(A4))
