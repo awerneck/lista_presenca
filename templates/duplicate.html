@@ -1,4 +1,4 @@
-<div class="alert alert-warning text-center p-4">
-  Presença já registrada hoje.<br>
-  {{ nome }}
-</div>
+{% extends "base.html" %}
+{% block content %}
+<div class="alert alert-warning">Presença já registrada hoje para este número de matrícula.</div>
+{% endblock %}
