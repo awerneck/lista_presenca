@@ -21,7 +21,7 @@ import pytz
 # -------------------------
 # CONFIG
 # -------------------------
-TOKEN_TTL_SECONDS = int(os.environ.get("TOKEN_TTL_SECONDS", "300"))
+TOKEN_TTL_SECONDS = int(os.environ.get("TOKEN_TTL_SECONDS", "120"))
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "https://lista-presenca-kdwr.onrender.com")
 SHEET_NAME = os.environ.get("SHEET_NAME", "Lista de Presença")
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
@@ -143,7 +143,7 @@ def lookup_ip_info(ip):
     if not ip:
         return "", "", ""
     try:
-        r = requests.get(f"http://ip-api.com/json/{ip}?fields=status,country,regionName,city", timeout=3)
+        r = requests.get(f"http://ip-api.com/json/{ip}?fields=status", timeout=3)
         d = r.json()
         if d.get("status") == "success":
             city = d.get("city", "")
@@ -414,4 +414,5 @@ def logout():
 # -------------------------
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
+
 
